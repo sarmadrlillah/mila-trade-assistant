@@ -178,9 +178,11 @@ body{background:var(--bg); color:#e7eef6; font-family:Inter,ui-sans-serif,system
    CMC key (user-provided) - visible here:
 */
 const CMC_KEY = "7c349fb2-99f1-4e60-8a50-0b0323354923";
-const BINANCE = "https://api.binance.com";
+const BINANCE = "https://spectacular-pixie-ead723.netlify.app/.netlify/functions/binance-proxy";
 const COINGECKO = "https://api.coingecko.com/api/v3";
 const CMC_API = "https://pro-api.coinmarketcap.com/v1";
+const proxyServer = true;
+
 
 /* Utility */
 const $ = id => document.getElementById(id);
@@ -630,3 +632,4 @@ $("evalBtn").addEventListener("click", ()=>{
 </script>
 </body>
 </html>
+
