@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Mila Trade Assistant — Full</title>
+<title>Mila | Crypto Trade Companion 🔍📊 — Full</title>
 
-<!-- Tailwind quick UI -->
+<!-- Tailwind for design -->
 <script src="https://cdn.tailwindcss.com"></script>
 
 <!-- Chart.js + financial plugin -->
@@ -13,634 +13,619 @@
 <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@3.3.0/dist/chartjs-chart-financial.umd.min.js"></script>
 
 <style>
-  :root{
-    --bg:#0b0f14; --card:#0f1720; --muted:#9aa4b2; --accent:#00ff95; --danger:#ff6b6b; --gold:#ffd166;
-  }
-  body{background:var(--bg); color:#e6edf3; font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; padding:18px;}
-  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02)); border-radius:14px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,0.5);}
-  .mono{font-variant-numeric: tabular-nums;}
-  .flash { animation:flash 1s linear infinite; }
-  @keyframes flash{0%{box-shadow:none}50%{box-shadow:0 0 14px rgba(255,107,107,0.16)}100%{box-shadow:none}}
-  a.small{color:var(--muted); font-size:12px}
-  .pill{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-size:12px}
-  /* responsive */
-  @media(min-width:1024px){ .layout{display:grid;grid-template-columns:360px 1fr; gap:18px} }
+:root{
+  --bg:#061016; --card:#0d1620; --muted:#98a3b3; --accent:#00ff95; --danger:#ff6b6b; --glass: rgba(255,255,255,0.02);
+}
+body{background:var(--bg); color:#e7eef6; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; margin:0; padding:18px;}
+.container {max-width:1200px; margin:0 auto;}
+.header {display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px;}
+.brand {display:flex; align-items:center; gap:12px;}
+.logo {width:56px; height:56px; border-radius:12px; background:linear-gradient(135deg,#001f2d,#00333f); display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--accent);}
+.title {font-size:20px; font-weight:700;}
+.subtitle {color:var(--muted); font-size:13px;}
+.card {background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02)); border-radius:12px; padding:14px; box-shadow:0 8px 30px rgba(0,0,0,0.6);}
+.grid {display:grid; gap:14px;}
+@media(min-width:1024px){ .main-grid {grid-template-columns:360px 1fr; gap:18px;} .right-grid{grid-template-columns:1fr 420px; gap:14px;} }
+.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);font-size:12px}
+.mono{font-variant-numeric:tabular-nums;}
+.flash { animation:flash 900ms linear infinite; }
+@keyframes flash { 0%{box-shadow:0 0 0 rgba(255,0,0,0)} 50%{box-shadow:0 0 18px rgba(255,0,0,0.12)} 100%{box-shadow:0 0 0 rgba(255,0,0,0)} }
+.small {font-size:12px; color:var(--muted);}
+.kv {display:flex; justify-content:space-between; gap:6px; align-items:center;}
+.chart-wrap {height:380px;}
+.badge {display:inline-block;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,0.35);font-size:12px}
 </style>
 </head>
 <body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <div class="logo">MILA</div>
+        <div>
+          <div class="title">Mila Trade Assistant — Full Suite</div>
+          <div class="subtitle">EMA gravity • ADR zones • Psych levels • Vector & PVSRA • Orderbook depth • Multi-API fallbacks</div>
+        </div>
+      </div>
+      <div class="kv">
+        <div class="pill mono" id="status">idle</div>
+        <div class="small">Saved Rules: <span class="mono">Never strip code • Prefer deep/complex</span></div>
+      </div>
+    </header>
 
-<header class="max-w-6xl mx-auto mb-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-semibold">Mila Trade Assistant <span class="text-[var(--accent)]">Pro</span></h1>
-      <div class="text-[var(--muted)] text-sm mt-1">Full Mila system — ADR, psych levels, EMAs, vectors, PVSRA, orderbook, multi-API fallbacks.</div>
-    </div>
-    <div class="text-right">
-      <div class="pill mono" id="statusPill">idle</div>
-    </div>
+    <main class="grid main-grid">
+      <!-- LEFT: Controls -->
+      <aside class="card">
+        <div>
+          <label class="small">1) Search coin (name or symbol)</label>
+          <input id="search" class="w-full mt-2 p-3 rounded-lg bg-[#071018] border border-[#12303b] mono" placeholder="Type: bitcoin, dolo, internet computer..." />
+          <div id="suggestions" class="mt-2 max-h-48 overflow-auto"></div>
+        </div>
+
+        <div class="mt-4">
+          <label class="small">Quote / Base</label>
+          <select id="quote" class="w-full mt-2 p-2 rounded-lg bg-[#071018] border border-[#12303b]">
+            <option value="USDT">USDT</option>
+            <option value="USDC">USDC</option>
+            <option value="BUSD">BUSD</option>
+            <option value="BTC">BTC</option>
+          </select>
+        </div>
+
+        <div class="mt-3">
+          <label class="small">Timeframe</label>
+          <select id="tf" class="w-full mt-2 p-2 rounded-lg bg-[#071018] border border-[#12303b]">
+            <option value="15m">15m</option>
+            <option value="1h" selected>1h</option>
+            <option value="4h">4h</option>
+            <option value="1d">1d</option>
+          </select>
+        </div>
+
+        <button id="fetchBtn" class="w-full mt-4 p-3 rounded-lg bg-[var(--accent)] text-black font-semibold">Fetch & Analyze</button>
+
+        <div class="mt-4 grid gap-2">
+          <button id="suggestBtn" class="p-2 rounded-lg bg-[#2b6be8]">Auto-fill Mila SL/TP (suggest)</button>
+          <button id="evalBtn" class="p-2 rounded-lg bg-[#00c2a8]">Evaluate Plan (size, RR, sanity)</button>
+        </div>
+
+        <div class="mt-4 small">
+          <div>Data order: Binance → CoinGecko → CoinMarketCap (CMC). If Binance available, full TA & orderbook shown.</div>
+          <div class="mt-2">Warning: CMC key visible client-side in this single-file demo. Use serverless proxy for production. (Proxy snippet at bottom)</div>
+        </div>
+      </aside>
+
+      <!-- RIGHT: Chart + Readouts -->
+      <section class="grid right-grid">
+        <!-- Chart Card -->
+        <div class="card">
+          <div class="flex items-start justify-between">
+            <div>
+              <div id="pair" class="text-xl font-semibold mono">—</div>
+              <div id="meta" class="small text-[var(--muted)] mt-1">no symbol selected</div>
+            </div>
+            <div class="text-right">
+              <div id="price" class="text-lg mono">—</div>
+              <div id="session" class="small text-[var(--muted)]">session</div>
+            </div>
+          </div>
+
+          <div class="chart-wrap mt-3">
+            <canvas id="chart"></canvas>
+          </div>
+
+          <div class="mt-3 grid grid-cols-3 gap-3">
+            <div class="small"><b>ADR(14):</b> <span id="adrVal">—</span></div>
+            <div class="small"><b>EMA50:</b> <span id="ema50">—</span></div>
+            <div class="small"><b>Vectors:</b> <span id="vecCount">—</span></div>
+          </div>
+        </div>
+
+        <!-- Right column: Stats & plan -->
+        <div>
+          <div class="card mb-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="small text-[var(--muted)]">Market Fundamentals</div>
+                <div id="mcaps" class="text-sm mono mt-1">—</div>
+              </div>
+              <div>
+                <img id="logo" src="" class="w-12 h-12 rounded-md" style="display:none"/>
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <div class="small">Orderbook (top 5)</div>
+              <div id="orderbook" class="mt-2 small text-[var(--muted)]">—</div>
+            </div>
+          </div>
+
+          <div class="card mb-3">
+            <div class="small text-[var(--muted)]">Mila’s Sanity Zone</div>
+            <div id="sanity" class="mt-2 mono small">—</div>
+            <div id="psych" class="mt-2 small text-[var(--muted)]">—</div>
+          </div>
+
+          <div class="card">
+            <div class="small text-[var(--muted)]">Mila’s Verdict</div>
+            <div id="verdict" class="mt-2"></div>
+          </div>
+        </div>
+
+        <!-- Below chart: Plan area spanning full width -->
+        <div class="card md:col-span-2">
+          <h3 class="text-lg font-semibold">Plan vs Reality — Input your trade</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-3">
+            <input id="entry" placeholder="Entry" class="p-2 rounded bg-[#071018] mono"/>
+            <input id="stop" placeholder="Stop Loss" class="p-2 rounded bg-[#071018] mono"/>
+            <input id="tp1" placeholder="TP1" class="p-2 rounded bg-[#071018] mono"/>
+            <input id="tp2" placeholder="TP2" class="p-2 rounded bg-[#071018] mono"/>
+            <input id="tpF" placeholder="Final TP" class="p-2 rounded bg-[#071018] mono"/>
+            <input id="balance" placeholder="Balance USDT" value="2000" class="p-2 rounded bg-[#071018] mono"/>
+            <input id="riskPct" placeholder="Risk %" value="1" class="p-2 rounded bg-[#071018] mono"/>
+            <select id="side" class="p-2 rounded bg-[#071018] mono"><option value="long">Long</option><option value="short">Short</option></select>
+          </div>
+
+          <div id="planOutput" class="mt-4 small mono">No plan evaluated.</div>
+        </div>
+      </section>
+    </main>
   </div>
-</header>
-
-<main class="max-w-6xl mx-auto layout">
-  <!-- LEFT: Controls -->
-  <section class="card">
-    <h2 class="text-lg font-semibold mb-3">1) Find coin</h2>
-
-    <label class="text-xs text-[var(--muted)]">Type name or symbol (CoinGecko search)</label>
-    <input id="search" class="w-full p-3 rounded-lg mt-2 bg-[#071018] border border-[#17202a] mono" placeholder="Type: bitcoin, dolo, internet computer..." autocomplete="off" />
-
-    <div id="suggestions" class="mt-2 max-h-44 overflow-auto"></div>
-
-    <div class="mt-4">
-      <label class="text-xs text-[var(--muted)]">Base quote (default)</label>
-      <select id="quote" class="w-full p-2 mt-1 rounded-lg bg-[#071018] border border-[#17202a]">
-        <option value="USDT">USDT</option>
-        <option value="USD">USD</option>
-        <option value="USDC">USDC</option>
-        <option value="BTC">BTC</option>
-      </select>
-    </div>
-
-    <div class="mt-4">
-      <label class="text-xs text-[var(--muted)]">Timeframe</label>
-      <select id="tf" class="w-full p-2 mt-1 rounded-lg bg-[#071018] border border-[#17202a]">
-        <option value="15m">15m</option>
-        <option value="1h" selected>1h</option>
-        <option value="4h">4h</option>
-        <option value="1d">1d</option>
-      </select>
-    </div>
-
-    <button id="fetchBtn" class="w-full mt-4 p-3 rounded-lg bg-[var(--accent)] text-black font-semibold">Fetch & Analyze</button>
-
-    <div class="mt-6">
-      <h3 class="text-sm text-[var(--muted)] mb-2">Quick actions</h3>
-      <div class="flex gap-2">
-        <button id="savePlan" class="flex-1 p-2 rounded-lg bg-[#17232b]">Save plan</button>
-        <button id="resetBtn" class="flex-1 p-2 rounded-lg bg-[#17232b]">Reset</button>
-      </div>
-    </div>
-
-    <div class="mt-6 text-[var(--muted)] text-xs">
-      <div>Data sources: Binance (first), CoinGecko (fallback), CoinMarketCap (fallback)</div>
-      <div class="mt-2">⚠️ CMC key visible in page source. Use serverless proxy for production.</div>
-    </div>
-  </section>
-
-  <!-- RIGHT: Chart & Deep Read -->
-  <section>
-    <div class="card mb-4">
-      <div class="flex items-start justify-between">
-        <div>
-          <div id="pairTitle" class="text-xl font-semibold mono">—</div>
-          <div id="pairSub" class="text-[var(--muted)] text-sm mt-1">Select coin to fetch</div>
-        </div>
-        <div class="text-right">
-          <div id="priceLive" class="text-lg mono">—</div>
-          <div id="sessionTag" class="text-xs text-[var(--muted)] mt-1">session</div>
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <canvas id="chart" height="260"></canvas>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-4 mb-4">
-      <div class="card">
-        <h4 class="text-sm text-[var(--muted)]">ADR & Psych</h4>
-        <div id="adrBlock" class="mt-2 mono text-sm">—</div>
-      </div>
-      <div class="card">
-        <h4 class="text-sm text-[var(--muted)]">EMA Gravity</h4>
-        <div id="emaBlock" class="mt-2 mono text-sm">—</div>
-      </div>
-      <div class="card">
-        <h4 class="text-sm text-[var(--muted)]">Orderbook</h4>
-        <div id="obBlock" class="mt-2 mono text-sm">—</div>
-      </div>
-    </div>
-
-    <div class="card mb-4">
-      <h3 class="text-lg font-semibold">Mila’s Depth Read</h3>
-      <div id="milaVerdict" class="mt-3 text-sm text-[var(--muted)]">—</div>
-    </div>
-
-    <div class="card">
-      <h3 class="text-lg font-semibold">Plan vs Reality (enter below then click "Evaluate plan")</h3>
-      <div class="grid grid-cols-2 gap-3 mt-3">
-        <div>
-          <label class="text-xs text-[var(--muted)]">Entry</label>
-          <input id="entry" class="w-full p-2 mt-1 rounded bg-[#071018] mono"/>
-        </div>
-        <div>
-          <label class="text-xs text-[var(--muted)]">Stop Loss</label>
-          <input id="stop" class="w-full p-2 mt-1 rounded bg-[#071018] mono"/>
-        </div>
-        <div>
-          <label class="text-xs text-[var(--muted)]">TP1</label>
-          <input id="tp1" class="w-full p-2 mt-1 rounded bg-[#071018] mono"/>
-        </div>
-        <div>
-          <label class="text-xs text-[var(--muted)]">TP2</label>
-          <input id="tp2" class="w-full p-2 mt-1 rounded bg-[#071018] mono"/>
-        </div>
-        <div>
-          <label class="text-xs text-[var(--muted)]">Final TP</label>
-          <input id="tpF" class="w-full p-2 mt-1 rounded bg-[#071018] mono"/>
-        </div>
-        <div>
-          <label class="text-xs text-[var(--muted)]">Balance (USDT)</label>
-          <input id="balance" value="2000" class="w-full p-2 mt-1 rounded bg-[#071018] mono"/>
-        </div>
-        <div>
-          <label class="text-xs text-[var(--muted)]">Risk %</label>
-          <input id="riskPct" value="1" class="w-full p-2 mt-1 rounded bg-[#071018] mono"/>
-        </div>
-        <div>
-          <label class="text-xs text-[var(--muted)]">Side</label>
-          <select id="side" class="w-full p-2 mt-1 rounded bg-[#071018] mono"><option value="long">Long</option><option value="short">Short</option></select>
-        </div>
-      </div>
-
-      <div class="flex gap-2 mt-4">
-        <button id="evalBtn" class="flex-1 p-2 rounded-lg bg-[var(--accent)] text-black font-semibold">Evaluate plan</button>
-        <button id="suggestBtn" class="flex-1 p-2 rounded-lg bg-[#3b82f6]">Suggest Mila levels</button>
-      </div>
-
-      <div id="planOutput" class="mt-4 text-sm mono">No plan analyzed yet.</div>
-    </div>
-
-  </section>
-</main>
-
-<!-- PWA manifest & SW will be created at runtime from this single file (no extra files required) -->
 
 <script>
-/* ================= CONFIG ================== */
-/* You asked everything in single file — CMC key included (visible in source). */
-const CMC_KEY = "7c349fb2-99f1-4e60-8a50-0b0323354923"; // your key (visible)
+/* ================== FULL MILA ENGINE ==================
+   Single-file full implementation. No external server required to test.
+   WARNING: CMC key is included in this file (visible). For production, create a serverless proxy and replace CMC calls with the proxy endpoint.
+   CMC key (user-provided) - visible here:
+*/
+const CMC_KEY = "7c349fb2-99f1-4e60-8a50-0b0323354923";
 const BINANCE = "https://api.binance.com";
 const COINGECKO = "https://api.coingecko.com/api/v3";
+const CMC_API = "https://pro-api.coinmarketcap.com/v1";
 
-/* ====== UTILITIES ====== */
-const $ = id=>document.getElementById(id);
-const fmt = (n,d=4)=>Number.isFinite(n)? Number(n).toFixed(d): "—";
-const msg = (s)=>{ $("statusPill").textContent = s; };
+/* Utility */
+const $ = id => document.getElementById(id);
+const fmt = (n,d=4)=> Number.isFinite(n)? Number(n).toFixed(d): "—";
+const setStatus = s => $("status").textContent = s;
 
-/* ====== Autocomplete (CoinGecko search) ====== */
-let selectedCoin = null; // {id,symbol,name,thumb}
-let chartInst = null;
+/* State */
+let selected = null;
+let lastState = null;
+let chartInstance = null;
 
-async function searchCoins(term){
-  if(!term || term.trim().length<1){ $("suggestions").innerHTML=""; return; }
+/* ----------------- Autocomplete via CoinGecko ----------------- */
+let searchTimer = null;
+$("search").addEventListener("input", (e) => {
+  clearTimeout(searchTimer);
+  const v = e.target.value.trim();
+  if(!v) { $("suggestions").innerHTML=""; return; }
+  searchTimer = setTimeout(()=> searchCoins(v), 250);
+});
+
+async function searchCoins(q){
   try{
-    const res = await fetch(`${COINGECKO}/search?query=${encodeURIComponent(term)}`);
+    setStatus("searching");
+    const res = await fetch(`${COINGECKO}/search?query=${encodeURIComponent(q)}`);
     const j = await res.json();
-    const coins = j.coins.slice(0,8);
-    const html = coins.map(c=>`
-      <div class="flex items-center gap-3 p-2 hover:bg-[#061018] cursor-pointer" onclick='selectCoin(${JSON.stringify(JSON.stringify(c))})'>
+    const coins = j.coins.slice(0,10);
+    const html = coins.map(c=> `
+      <div class="flex items-center gap-3 p-2 hover:bg-[#06161b] cursor-pointer" onclick='selectCoin(${JSON.stringify(JSON.stringify(c))})'>
         <img src="${c.thumb}" class="w-6 h-6 rounded-full"/>
         <div>
-          <div class="mono">${c.name} <span class="text-[var(--muted)]">(${c.symbol.toUpperCase()})</span></div>
-          <div class="text-[var(--muted)] text-xs">${c.market_cap_rank? "rank "+c.market_cap_rank : ""}</div>
+          <div class="mono">${c.name} <span class="small text-[var(--muted)]">(${c.symbol.toUpperCase()})</span></div>
+          <div class="small text-[var(--muted)]">${c.market_cap_rank? 'rank '+c.market_cap_rank : ''}</div>
         </div>
       </div>
     `).join("");
-    $("suggestions").innerHTML = html;
+    $("suggestions").innerHTML = html || "<div class='small p-2 text-[var(--muted)]'>no results</div>";
+    setStatus("ready");
   }catch(e){
-    $("suggestions").innerHTML = `<div class="text-xs text-[var(--muted)] p-2">Search failed</div>`;
+    $("suggestions").innerHTML = "<div class='small p-2 text-[var(--muted)]'>search error</div>";
+    setStatus("error");
   }
 }
 
-/* Called on click — we get stringified JSON because of inline onclick */
+/* select coin from list */
 function selectCoin(str){
-  const coin = JSON.parse(str);
-  selectedCoin = { id: coin.id, symbol: coin.symbol.toUpperCase(), name: coin.name, thumb: coin.thumb };
-  $("search").value = selectedCoin.symbol;
-  $("pairTitle").textContent = `${selectedCoin.name} (${selectedCoin.symbol})`;
-  $("pairSub").textContent = `resolved via CoinGecko (trying Binance pair)`;
+  const obj = JSON.parse(str);
+  selected = { id: obj.id, symbol: obj.symbol.toUpperCase(), name: obj.name, thumb: obj.large || obj.thumb };
+  $("search").value = `${selected.name} (${selected.symbol})`;
   $("suggestions").innerHTML = "";
-  msg("coin selected");
+  setStatus("coin selected");
 }
 
-/* ====== Resolve pair to Binance symbol if possible ====== */
-async function resolveBinancePair(symbol, quote="USDT"){
-  // Try common forms: SYMBOL+QUOTE, SYMBOL/QUOTE, COINGECKO -> binance symbol map
-  const pair = (symbol+quote).toUpperCase();
-  try{
-    // quick ping: price endpoint to check existence
-    const r = await fetch(`${BINANCE}/api/v3/ticker/price?symbol=${pair}`);
-    if(r.ok){ return pair; }
-  }catch(e){}
-  // sometimes quote is different (BUSD etc.) - try fallback quotes
-  const altQuotes = ["USDT","BUSD","USDC","BTC","ETH"];
-  for(const q of altQuotes){
+/* ----------------- Pair resolution (Binance) ----------------- */
+async function resolvePair(symbol, quote){
+  // Ensure uppercase
+  const sym = symbol.replace(/\s+/g,'').toUpperCase();
+  const tries = [sym+quote, sym+'USDT', sym+'BUSD', sym+'USDC', sym+'BTC', sym+'ETH'];
+  for(const p of tries){
     try{
-      const p = (symbol + q).toUpperCase();
       const r = await fetch(`${BINANCE}/api/v3/ticker/price?symbol=${p}`);
-      if(r.ok) return p;
+      if(r.ok) { return p; }
     }catch(e){}
   }
   return null;
 }
 
-/* ====== Klines fetch with multi-API fallback ====== */
-async function fetchKlinesBest(symbolPair, interval, limit=500){
-  // Try Binance first (full OHLCV)
+/* ----------------- Fetch klines (multi-source) ----------------- */
+async function fetchKlines(pair, interval='1h', limit=500){
+  // Binance first
   try{
-    const r = await fetch(`${BINANCE}/api/v3/klines?symbol=${symbolPair}&interval=${interval}&limit=${limit}`);
+    const r = await fetch(`${BINANCE}/api/v3/klines?symbol=${pair}&interval=${interval}&limit=${limit}`);
     if(r.ok){
       const raw = await r.json();
+      // map to objects
       return raw.map(d=>({ t:+d[0], o:+d[1], h:+d[2], l:+d[3], c:+d[4], v:+d[5] }));
     }
-  }catch(e){}
-  // If binance fails, try CoinGecko OHLC (only supports certain day ranges) - fallback to price series
+  }catch(e){ console.warn('binance klines fail', e); }
+
+  // CoinGecko fallback (only daily support) for 1d
+  if(interval==='1d' && selected){
+    try{
+      const j = await fetch(`${COINGECKO}/coins/${selected.id}/ohlc?vs_currency=usd&days=14`).then(r=>r.json());
+      // ascending; convert to array of objects
+      return j.reverse().map(d=>({ t:d[0], o:d[1], h:d[2], l:d[3], c:d[4], v:0 }));
+    }catch(e){ console.warn('cg ohlc fail', e); }
+  }
+
+  // CMC fallback (requires key) - historical OHLC
   try{
-    // CoinGecko doesn't provide minute candles. We'll fallback to daily series if interval is daily.
-    if(interval === "1d"){
-      const cg = await fetch(`${COINGECKO}/coins/${selectedCoin.id}/ohlc?vs_currency=usd&days=14`).then(r=>r.json());
-      // cg: [ [timestamp, open, high, low, close], ... ] ascending
-      return cg.reverse().map(d=>({ t:d[0], o:d[1], h:d[2], l:d[3], c:d[4], v:0 }));
-    }
-  }catch(e){}
-  // Final: try CMC historical OHLC (requires key)
-  try{
-    const sym = selectedCoin? selectedCoin.symbol : symbolPair.replace(/USDT|BUSD|USDC|BTC|ETH/gi,"");
-    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/ohlcv/historical?symbol=${encodeURIComponent(sym)}&convert=USD&count=30`;
-    const r = await fetch(url, { headers: {'X-CMC_PRO_API_KEY': CMC_KEY} });
+    const sym = pair.replace(/USDT|BUSD|USDC|BTC|ETH/gi,'') || selected?.symbol;
+    const url = `${CMC_API}/cryptocurrency/ohlcv/historical?symbol=${encodeURIComponent(sym)}&convert=USD&count=30`;
+    const r = await fetch(url, { headers: {'X-CMC_PRO_API_KEY': CMC_KEY }});
     if(r.ok){
       const j = await r.json();
-      // parse quotes -> descending
-      const q = j.data.quotes.map(qi=>({ t: new Date(qi.time_open).getTime(), o: qi.quote.USD.open, h: qi.quote.USD.high, l: qi.quote.USD.low, c: qi.quote.USD.close, v: qi.quote.USD.volume }));
-      return q.reverse();
+      const quotes = j.data.quotes;
+      return quotes.map(q=>({ t:new Date(q.time_open).getTime(), o:q.quote.USD.open, h:q.quote.USD.high, l:q.quote.USD.low, c:q.quote.USD.close, v:q.quote.USD.volume })).reverse();
     }
-  }catch(e){}
-  throw new Error("No OHLCV source available for this symbol.");
+  }catch(e){ console.warn('cmc ohlc fail', e); }
+
+  throw new Error('No OHLC source available');
 }
 
-/* ====== Orderbook (Binance only) ====== */
+/* ----------------- Orderbook ----------------- */
 async function fetchOrderbook(pair){
   try{
-    const r = await fetch(`${BINANCE}/api/v3/depth?symbol=${pair}&limit=100`);
-    if(!r.ok) throw new Error("OB fail");
-    const j = await r.json();
-    const bids = j.bids.map(b=>({p:+b[0], q:+b[1]}));
-    const asks = j.asks.map(a=>({p:+a[0], q:+a[1]}));
-    const bidQ = bids.reduce((s,b)=>s+b.q,0);
-    const askQ = asks.reduce((s,a)=>s+a.q,0);
-    const skew = (bidQ - askQ) / (bidQ + askQ);
-    return { bids, asks, bidQ, askQ, skew };
-  }catch(e){ return null; }
+    const r = await fetch(`${BINANCE}/api/v3/depth?symbol=${pair}&limit=50`);
+    if(r.ok){
+      const j = await r.json();
+      const bids = j.bids.map(b=>({p:+b[0], q:+b[1]}));
+      const asks = j.asks.map(a=>({p:+a[0], q:+a[1]}));
+      const bidQ = bids.reduce((s,b)=>s+b.q,0);
+      const askQ = asks.reduce((s,a)=>s+a.q,0);
+      const skew = (bidQ - askQ) / (bidQ + askQ);
+      return { bids, asks, bidQ, askQ, skew };
+    }
+  }catch(e){ console.warn('orderbook fail', e); }
+  return null;
 }
 
-/* ====== Technical calculations ====== */
+/* ----------------- Technicals: EMA, ADR, Psych, Vectors ----------------- */
 function emaArray(arr, period){
   if(arr.length < period) return Array(arr.length).fill(null);
   const k = 2/(period+1);
-  let res = [];
-  let prev = arr.slice(0,period).reduce((a,b)=>a+b,0)/period;
-  res[period-1]=prev;
+  let out = new Array(arr.length).fill(null);
+  let seed = arr.slice(0,period).reduce((a,b)=>a+b,0)/period;
+  out[period-1] = seed;
+  let prev = seed;
   for(let i=period;i<arr.length;i++){
     prev = arr[i]*k + prev*(1-k);
-    res[i]=prev;
+    out[i] = prev;
   }
-  return res;
+  return out;
 }
 
-function computeADRFromDaily(dailyCandles){
-  const ranges = dailyCandles.map(c=>Math.abs(c.h - c.l));
+function computeADR(dailyCandles){
+  const ranges = dailyCandles.map(c => Math.abs(c.h - c.l));
   const adr = ranges.reduce((a,b)=>a+b,0)/ranges.length;
   return adr;
 }
 
-function generatePsych(price){
-  // step sizing by magnitude
-  const magnitude = Math.pow(10, Math.floor(Math.log10(price)));
-  let step;
-  if(price>=1000) step = magnitude; // 1000s
-  else if(price>=100) step = magnitude/10; // 10s
-  else if(price>=10) step = magnitude/10; // 1s
-  else if(price>=1) step = 0.1;
-  else if(price>=0.1) step = 0.01;
-  else step = 0.001;
-  const center = Math.round(price/step)*step;
-  const lvls = [];
-  for(let i=-4;i<=4;i++) lvls.push(Number((center + i*step).toFixed(8)));
-  return lvls;
+function smartPsych(price){
+  // choose steps based on magnitude
+  if(price>=1000) { const s=100; const base=Math.round(price/100)*100; return [base-200,base-100,base,base+100,base+200]; }
+  if(price>=100)  { const s=10; const base=Math.round(price/10)*10; return [base-50,base-20,base,base+20,base+50]; }
+  if(price>=10)   { const s=1; const base=Math.round(price); return [base-5,base-2,base,base+2,base+5]; }
+  if(price>=1)    { const s=0.1; const base=Math.round(price*10)/10; return [Number((base-0.5).toFixed(4)),Number((base-0.2).toFixed(4)),base,Number((base+0.2).toFixed(4)),Number((base+0.5).toFixed(4))]; }
+  return [Number((price-0.05).toFixed(6)), Number((price-0.02).toFixed(6)), Number(price.toFixed(6)), Number((price+0.02).toFixed(6)), Number((price+0.05).toFixed(6))];
 }
 
 function detectVectors(candles){
-  // PVSRA-ish vector detection: body large vs range plus vol spike vs 20-period vol avg
+  // Simple PVSRA vector detection: body >= 60% of range AND vol > 1.6*sma20
   const vols = candles.map(c=>c.v || 0);
-  const volSMA20 = [];
-  for(let i=0;i<candles.length;i++){
-    if(i<19) volSMA20.push(null);
-    else volSMA20.push(vols.slice(i-19,i+1).reduce((s,x)=>s+x,0)/20);
-  }
-  const vectors = [];
+  const sma20 = vols.map((_,i) => i<19 ? null : vols.slice(i-19,i+1).reduce((a,b)=>a+b,0)/20);
+  let vectors = [];
   for(let i=0;i<candles.length;i++){
     const c = candles[i];
     const body = Math.abs(c.c - c.o);
-    const range = c.h - c.l || 1;
-    const bodyRatio = body / range;
-    const volSpike = volSMA20[i] ? c.v > 1.6 * volSMA20[i] : false;
-    if(bodyRatio >= 0.6 && volSpike) vectors.push({i,dir: c.c>c.o? 'green':'red', t:c.t, o:c.o, c:c.c, h:c.h, l:c.l});
+    const range = (c.h - c.l) || 1;
+    const bodyPct = body/range;
+    const spike = sma20[i] ? c.v > 1.6 * sma20[i] : false;
+    if(bodyPct >= 0.6 && spike) vectors.push({ idx:i, dir: c.c > c.o ? 'green':'red', t:c.t, price:c.c });
   }
   return vectors;
 }
 
-/* ====== Session rhythm ====== */
-function sessionByTimestamp(ts){
-  // ts in ms (UTC)
-  const d = new Date(ts);
-  const hour = d.getUTCHours();
-  // Asian: 00:00-06:59, London: 07:00-15:59, NY: 16:00-23:59 (rough)
-  if(hour >= 0 && hour < 7) return 'Asian';
-  if(hour >= 7 && hour < 16) return 'London';
+/* ----------------- Session rhythm ----------------- */
+function sessionFromTS(ts){
+  const d = new Date(ts); const h = d.getUTCHours();
+  if(h>=0 && h<7) return 'Asian';
+  if(h>=7 && h<16) return 'London';
   return 'New York';
 }
 
-/* ====== Mila core suggestions ====== */
-function milaRecommendations(state, side='long'){
-  // state: {price, adr, adrLo, adrHi, psych, emas, vectors, ob}
+/* ----------------- Mila interpretation engine ----------------- */
+function milaRead(state, side='long'){
+  // inputs: state contains price, adr, adrLo/Hi, emas, vectors, ob, psych
   const { price, adr, psych, emas, vectors, ob } = state;
   // bias
+  const e50 = emas.e50?.slice(-1)[0] || null, e200 = emas.e200?.slice(-1)[0] || null, e800 = emas.e800?.slice(-1)[0] || null;
   let bias = 'neutral';
-  if(price > (emas.e50?.slice(-1)[0] || price)) bias = 'bullish';
-  if(price < (emas.e50?.slice(-1)[0] || price)) bias = 'bearish';
+  if(e50 && price > e50) bias = 'bullish';
+  if(e50 && price < e50) bias = 'bearish';
+
   // vector context
-  const lastVec = vectors.slice(-4);
-  const greens = lastVec.filter(v=>v.dir==='green').length;
-  const reds = lastVec.filter(v=>v.dir==='red').length;
+  const lastVec = vectors.slice(-6);
+  const greenCount = lastVec.filter(v=>v.dir==='green').length;
+  const redCount = lastVec.filter(v=>v.dir==='red').length;
+
   // suggested risk
-  const volPct = (state.adr / state.price);
+  const volRatio = state.adr / state.price;
   let suggestedRisk = 1.0;
-  if(volPct > 0.06) suggestedRisk = 0.5;
-  if(volPct < 0.02) suggestedRisk = 1.5;
-  if(greens > reds && bias==='bullish') suggestedRisk = 0.5; // caution on green dominance high
-  // suggested sl/tps
+  if(volRatio > 0.06) suggestedRisk = 0.5;
+  if(volRatio < 0.02) suggestedRisk = 1.5;
+  if(greenCount > redCount && bias==='bullish') suggestedRisk = Math.min(suggestedRisk, 0.5);
+
+  // suggested SL/TPs
   let sSL, sTP1, sTP2, sTPF;
   if(side === 'long'){
-    sSL = Math.max(state.adrLo * 0.995, price - state.adr*0.45);
+    sSL = Math.max(state.adrLo*0.995, price - state.adr*0.45);
     sTP1 = price + state.adr*0.5;
     sTP2 = Math.min(price + state.adr*0.9, state.adrHi*0.998);
     sTPF = Math.min(price + state.adr*1.3, state.adrHi*1.02);
   } else {
-    sSL = Math.min(state.adrHi * 1.005, price + state.adr*0.45);
+    sSL = Math.min(state.adrHi*1.005, price + state.adr*0.45);
     sTP1 = price - state.adr*0.5;
     sTP2 = Math.max(price - state.adr*0.9, state.adrLo*1.002);
     sTPF = Math.max(price - state.adr*1.3, state.adrLo*0.98);
   }
 
-  // psych intersection checks
+  // nearest psych
   const nearestPsych = psych.reduce((acc,p)=> Math.abs(p - price) < Math.abs(acc - price) ? p : acc, psych[0]);
 
+  // narrative
+  let notes = [];
+  notes.push(`Bias: ${bias}. Price ${price > e50 ? 'above' : 'below'} 50EMA${e50?` (${fmt(e50)})`:''}.`);
+  if(greenCount > redCount) notes.push(`Recent green vector dominance (${greenCount} vs ${redCount}) — MM closing longs possible.`);
+  if(redCount > greenCount) notes.push(`Recent red vector dominance (${redCount} vs ${greenCount}) — shorts being closed may attract buys.`);
+  if(ob) notes.push(`Orderbook skew: ${(ob.skew>0? 'bids dominant':'asks dominant')} (bidΣ=${fmt(ob.bidQ,2)}, askΣ=${fmt(ob.askQ,2)}).`);
+  notes.push(`Nearest psych: ${fmt(nearestPsych)}. ADR: ${fmt(adr)}.`);
+
   return {
-    bias, suggestedRisk, recommended: { sSL, sTP1, sTP2, sTPF }, nearestPsych
+    notes, suggestedRisk, recommended: { sSL, sTP1, sTP2, sTPF }, bias, nearestPsych
   };
 }
 
-/* ====== Chart helper ====== */
+/* ----------------- Chart rendering ----------------- */
 function renderChart(candles, emas){
-  const ctx = document.getElementById('chart').getContext('2d');
-  const dataset = candles.map(c=>({x:new Date(c.t), o:c.o, h:c.h, l:c.l, c:c.c}));
-  const ema50Data = emas.e50.map((v,i)=>({x:new Date(candles[i].t), y:v}));
-  const ema200Data = emas.e200.map((v,i)=>({x:new Date(candles[i].t), y:v}));
-  if(chartInst) chartInst.destroy();
-  chartInst = new Chart(ctx, {
+  const ctx = $("chart").getContext('2d');
+  const data = candles.map(c=>({x:new Date(c.t), o:c.o, h:c.h, l:c.l, c:c.c}));
+  const ema50 = emas.e50.map((v,i)=> v? ({x:new Date(candles[i].t), y:v}) : null).filter(Boolean);
+  const ema200 = emas.e200.map((v,i)=> v? ({x:new Date(candles[i].t), y:v}) : null).filter(Boolean);
+
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
     type: 'candlestick',
-    data: { datasets: [
-      { label:'Price', data: dataset },
-      { label:'EMA50', type:'line', data: ema50Data, borderColor:'#00ff95', borderWidth:1.4, pointRadius:0 },
-      { label:'EMA200', type:'line', data: ema200Data, borderColor:'#7aa2f7', borderWidth:1.2, pointRadius:0 }
-    ]},
+    data: {
+      datasets: [
+        { label: 'Price', data: data, borderColor:'#9aa4b2' },
+        { label: 'EMA50', type:'line', data: ema50, borderColor:'#00ff95', borderWidth:1.2, pointRadius:0 },
+        { label: 'EMA200', type:'line', data: ema200, borderColor:'#7aa2f7', borderWidth:1.2, pointRadius:0 }
+      ]
+    },
     options: {
-      parsing: false, maintainAspectRatio:false,
-      plugins:{ legend:{ labels:{ color:'#e6edf3' }}},
-      scales:{ x:{ ticks:{ color:'#9aa4b2' }}, y:{ ticks:{ color:'#9aa4b2' }}}
+      parsing:false, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#e6edf3' } } },
+      scales:{ x:{ ticks:{ color:'#9aa4b2' } }, y:{ ticks:{ color:'#9aa4b2' }}}
     }
   });
 }
 
-/* ====== Plan evaluation & sizing ====== */
-function evaluatePlan(form, state){
-  const entry = +form.entry, stop = +form.stop, tp1 = +form.tp1, tp2 = +form.tp2, tpF = +form.tpF;
-  const balance = +form.balance, riskPct = +form.riskPct, side = form.side;
-  const riskAmt = balance*(riskPct/100);
+/* ----------------- Sizing & Plan evaluation ----------------- */
+function evaluateUserPlan(form, state){
+  // form: {entry, stop, tp1, tp2, tpF, balance, riskPct, side}
+  const entry = +form.entry, stop = +form.stop, tp1=+form.tp1, tp2=+form.tp2, tpF=+form.tpF;
+  const balance = +form.balance || 0, riskPct = +form.riskPct || 1, side = form.side || 'long';
+  const riskAmt = balance * (riskPct/100);
   const stopDist = Math.abs(entry - stop);
-  const qty = stopDist>0 ? (riskAmt/stopDist) : 0;
+  const qty = stopDist>0? (riskAmt / stopDist) : 0;
   const rr = (t)=> Math.abs((t - entry) / (entry - stop));
-  const rec = milaRecommendations(state, side);
 
-  // evaluation
+  const mila = milaRead(state, side);
+
   const issues = [];
-  if(side === 'long' && entry > state.adrHi) issues.push("Entry above ADR high — high trap risk.");
-  if(side === 'short' && entry < state.adrLo) issues.push("Entry below ADR low — high trap risk.");
-  if(Math.abs(stop - rec.recommended.sSL) / Math.abs(rec.recommended.sSL) > 0.35) issues.push("Your SL is far from Mila's suggested SL.");
-  if(Math.abs(tpF - rec.recommended.sTPF) / Math.abs(rec.recommended.sTPF) > 0.6) issues.push("Final TP is outside reasonable range (greedy).");
+  if(side==='long' && entry > state.adrHi) issues.push('Entry above ADR high — trap risk.');
+  if(side==='short' && entry < state.adrLo) issues.push('Entry below ADR low — trap risk.');
+  if(Math.abs(stop - mila.recommended.sSL) / Math.abs(mila.recommended.sSL) > 0.35) issues.push('Your SL is far from Mila suggested SL (structural mismatch).');
 
   return {
     sizing:{ riskAmt, qty },
-    rrs: { r1: rr(tp1), r2: rr(tp2), rF: rr(tpF) },
-    issues, rec
+    rrs:{ r1:rr(tp1), r2:rr(tp2), rF:rr(tpF) },
+    issues, mila
   };
 }
 
-/* ====== UI wiring ====== */
-
-$("search").addEventListener("input", (e)=> searchCoins(e.target.value));
-
-async function onFetchClick(){
-  if(!selectedCoin){ alert("Type and select a coin from suggestions first."); return; }
-  const quote = $("quote").value || "USDT";
-  const tf = $("tf").value || "1h";
-  msg("resolving pair...");
-  // try resolve to Binance pair
-  const binSym = await resolveBinancePair(selectedCoin.symbol.replace(/\s+/g,''), quote) || await resolveBinancePair(selectedCoin.symbol, quote);
-  let usedSource = "binance";
-  let pair = binSym;
+/* ----------------- UI glue: fetch & analyze ----------------- */
+$("fetchBtn").addEventListener("click", async ()=>{
   try{
-    if(!pair) throw new Error("No Binance pair, will fallback to CMC/Coingecko.");
-    msg("fetching klines from Binance...");
-    const kl = await fetchKlinesBest(pair, tf, 400);
-    // prepare state
-    // use last 200 candles for analysis
-    const candles = kl.slice(-200);
-    const closes = candles.map(c=>c.c);
-    const daily = await fetchKlinesBest(pair, "1d", 30).catch(()=>null); // try daily for ADR
-    const adr = daily? computeADRFromDaily(daily) : (Math.max(...closes) - Math.min(...closes));
-    const price = candles.at(-1).c;
-    const psych = generatePsych(price);
-    const e5 = emaArray(closes,5), e13 = emaArray(closes,13), e50 = emaArray(closes,50), e200 = emaArray(closes,200);
-    const e800 = closes.length>=800? emaArray(closes,800) : null;
-    const vectors = detectVectors(candles);
-    const ob = await fetchOrderbook(pair).catch(()=>null);
+    if(!selected){ alert('Pick a coin from suggestions first'); return; }
+    setStatus('resolving pair');
+    const quote = $("quote").value || 'USDT';
+    const tf = $("tf").value || '1h';
+    // resolve pair
+    const pair = await resolvePair(selected.symbol, quote) || await resolvePair(selected.symbol, 'USDT');
+    if(!pair){
+      // produce fallback price via CoinGecko
+      setStatus('fallback: coingecko');
+      const priceObj = await fetch(`${COINGECKO}/simple/price?ids=${selected.id}&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true`).then(r=>r.json());
+      const p = priceObj[selected.id].usd;
+      const mcap = priceObj[selected.id].usd_market_cap;
+      // crude sanity zone
+      const adr = p * 0.05;
+      const state = { pair: selected.symbol + '/USD (CG)', source:'coingecko', price:p, adr, adrHi:p+adr, adrLo:p-adr, psych: smartPsych(p), emas:{}, vectors:[], ob:null, candles:[] };
+      lastState = state;
+      renderFallback(state);
+      setStatus('ready (fallback)');
+      return;
+    }
 
-    const state = {
-      pair, source:usedSource, candles, price, adr, adrHi: price + adr, adrLo: price - adr,
-      psych, emas: { e5,e13,e50,e200, e800 }, vectors, ob
-    };
+    setStatus('fetching klines');
+    // fetch klines
+    const klines = await fetchKlines(pair, tf, 500);
+    // daily for ADR
+    const daily = await fetchKlines(pair.replace(/(USDT|BUSD|USDC|BTC|ETH)$/i,'' ) + quote, '1d', 30).catch(()=>null);
+    const dailyCandles = await fetchKlines(pair, '1d', 30).catch(()=>null);
+    const adr = dailyCandles? computeADR(dailyCandles) : (Math.max(...klines.map(c=>c.h)) - Math.min(...klines.map(c=>c.l)));
+    const price = klines.at(-1).c;
+    const psych = smartPsych(price);
+    // EMAs from closes
+    const closes = klines.map(k=>k.c);
+    const emas = { e5: emaArray(closes,5), e13: emaArray(closes,13), e50: emaArray(closes,50), e200: emaArray(closes,200), e800: closes.length>=800? emaArray(closes,800) : null };
+    const vectors = detectVectors(klines);
+    const ob = await fetchOrderbook(pair);
+    const state = { pair, source:'binance', price, adr, adrHi: price + adr, adrLo: price - adr, psych, emas, vectors, ob, candles:klines };
+    lastState = state;
 
     // render UI blocks
-    $("pairTitle").textContent = pair;
-    $("pairSub").textContent = `${selectedCoin.name} • ${tf} • source: Binance`;
-    $("priceLive").textContent = fmt(price, 6);
-    $("sessionTag").textContent = sessionByTimestamp(candles.at(-1).t);
+    $("pair").textContent = pair;
+    $("meta").textContent = `${selected.name} • ${selected.symbol} • ${tf} • source: Binance`;
+    $("price").textContent = fmt(price,6);
+    $("session").textContent = sessionFromTS(klines.at(-1).t);
+    $("logo").src = selected.thumb; $("logo").style.display = 'block';
 
-    updateBlocks(state);
-    renderChart(candles, state.emas);
+    // ADR / EMA / vectors / orderbook / psych
+    $("adrVal").textContent = fmt(state.adr,6);
+    $("ema50").textContent = state.emas.e50.at(-1)? fmt(state.emas.e50.at(-1),6) : '—';
+    $("vecCount").textContent = state.vectors.length;
 
-    // mila verdict
-    const mil = milaRecommendations(state, "long");
-    $("milaVerdict").innerHTML = `
-      <div><b>Bias:</b> ${mil.bias} • <b>Suggested risk:</b> ${fmt(mil.suggestedRisk,1)}%</div>
-      <div class="mt-2 text-[var(--muted)]">${mil.nearestPsych? "Nearest psych: "+fmt(mil.nearestPsych,6):""}</div>
-      <div class="mt-2"><b>Recommended SL:</b> ${fmt(mil.recommended.sSL)} • <b>TP1:</b> ${fmt(mil.recommended.sTP1)} • <b>TP2:</b> ${fmt(mil.recommended.sTP2)} • <b>Final:</b> ${fmt(mil.recommended.sTPF)}</div>
-    `;
-
-    msg("analysis ready");
-
-    // store last state
-    window.__MILA_STATE = state;
-
-  }catch(err){
-    // Try CMC/Gecko fallback: pull price and produce sanity zone
-    msg("fallback mode");
+    // mcap & ccap via CMC (optional)
     try{
-      // try CoinGecko price
-      const id = selectedCoin.id;
-      const cg = await fetch(`${COINGECKO}/simple/price?ids=${id}&vs_currencies=usd`).then(r=>r.json());
-      const price = cg[id].usd;
-      // crude ADR estimate (pct)
-      const adr = price * 0.05;
-      const psych = generatePsych(price);
-      const state = {
-        pair: selectedCoin.symbol + " (not on Binance)", source: "coingecko", candles:[], price, adr, adrHi:price+adr, adrLo:price-adr, psych,
-        emas: { e5:[], e13:[], e50:[], e200:[] }, vectors:[], ob:null
-      };
-      $("pairTitle").textContent = selectedCoin.symbol + " (CG)";
-      $("pairSub").textContent = selectedCoin.name + " • fallback data";
-      $("priceLive").textContent = fmt(price,6);
-      $("sessionTag").textContent = "N/A";
-      updateBlocks(state);
-      $("milaVerdict").innerHTML = `<div>Fallback sanity zone produced from coingecko price. For deeper TA, choose a Binance-listed coin.</div>`;
-      window.__MILA_STATE = state;
-      msg("fallback ready");
-    }catch(e){
-      msg("failed");
-      alert("Unable to fetch data from Binance/CoinGecko/CMC for this coin.");
-    }
+      const symbolShort = selected.symbol.replace(/USDT|USD/gi,'');
+      const cmcRes = await fetch(`${CMC_API}/cryptocurrency/info?symbol=${symbolShort}`, { headers: {'X-CMC_PRO_API_KEY': CMC_KEY} }).then(r=>r.json()).catch(()=>null);
+      const cmcQuote = await fetch(`${CMC_API}/cryptocurrency/quotes/latest?symbol=${symbolShort}&convert=USD`, { headers:{ 'X-CMC_PRO_API_KEY': CMC_KEY } }).then(r=>r.json()).catch(()=>null);
+      if(cmcQuote?.data && cmcQuote.data[symbolShort]){
+        const q = cmcQuote.data[symbolShort].quote.USD;
+        $("mcaps").innerHTML = `Market cap: <b>${q.market_cap? '$'+Math.round(q.market_cap).toLocaleString() : '—'}</b> • 24h vol: <b>${q.volume_24h? '$'+Math.round(q.volume_24h).toLocaleString(): '—'}</b> • Change24h: <b>${q.percent_change_24h? q.percent_change_24h.toFixed(2)+'%':'—'}</b>`;
+      } else {
+        $("mcaps").textContent = 'Fundamentals unavailable';
+      }
+    }catch(e){ $("mcaps").textContent = 'Fundamentals unavailable'; }
+
+    // orderbook
+    if(ob){
+      const topB = ob.bids.slice(0,5).map(b=>`${fmt(b.p,6)} (${fmt(b.q,2)})`).join('<br>');
+      const topA = ob.asks.slice(0,5).map(a=>`${fmt(a.p,6)} (${fmt(a.q,2)})`).join('<br>');
+      $("orderbook").innerHTML = `<div class="grid grid-cols-2 gap-4"><div><b>Bids</b><div class="mt-1 small">${topB}</div></div><div><b>Asks</b><div class="mt-1 small">${topA}</div></div></div>`;
+    } else { $("orderbook").textContent = 'Orderbook not available'; }
+
+    // Sanity zone & psych
+    const mila = milaRead(state, 'long');
+    $("sanity").innerHTML = `Entry ~ <b class="mono">${fmt(state.price,6)}</b><br/>SL ~ <b class="mono">${fmt(mila.recommended.sSL,6)}</b><br/>TP1 <b class="mono">${fmt(mila.recommended.sTP1,6)}</b> • TP2 <b class="mono">${fmt(mila.recommended.sTP2,6)}</b> • Final <b class="mono">${fmt(mila.recommended.sTPF,6)}</b>`;
+    $("psych").innerHTML = `Psych levels: ${state.psych.map(p=>`<span class="pill mono">${fmt(p,6)}</span>`).join(' ')}`;
+
+    // Verdict
+    $("verdict").innerHTML = `<div>${mila.notes.map(n=>`<div class="small">${n}</div>`).join('')}</div><div class="mt-2 small text-[var(--muted)]">Suggested risk: <b>${fmt(mila.suggestedRisk,2)}%</b> • Nearest psych: <b>${fmt(mila.nearestPsych,6)}</b></div>`;
+
+    // Chart
+    renderChart(state.candles.slice(-200), state.emas);
+
+    setStatus('ready (binance)');
+  }catch(err){
+    console.error(err);
+    setStatus('error');
+    alert('Fetch failed. See console for details.');
   }
-}
-
-$("fetchBtn").addEventListener("click", onFetchClick);
-
-/* update ADR / EMA / OB blocks */
-function updateBlocks(state){
-  // adr block
-  $("adrBlock").innerHTML = `
-    ADR(14): <b class="mono">${fmt(state.adr,6)}</b><br/>
-    ADR Low: <span class="mono">${fmt(state.adrLo,6)}</span><br/>
-    ADR High: <span class="mono">${fmt(state.adrHi,6)}</span><br/>
-    Psych: ${state.psych.slice(0,7).map(p=>`<span class="pill mono">${fmt(p,6)}</span>`).join(' ')}
-  `;
-  // ema block
-  const e = state.emas;
-  $("emaBlock").innerHTML = `
-    EMA5: <span class="mono">${e.e5?.at(-1)? fmt(e.e5.at(-1),6):'—'}</span><br/>
-    EMA13: <span class="mono">${e.e13?.at(-1)? fmt(e.e13.at(-1),6):'—'}</span><br/>
-    EMA50: <span class="mono">${e.e50?.at(-1)? fmt(e.e50.at(-1),6):'—'}</span><br/>
-    EMA200: <span class="mono">${e.e200?.at(-1)? fmt(e.e200.at(-1),6):'—'}</span>
-  `;
-  // ob block
-  if(state.ob){
-    $("obBlock").innerHTML = `BidΣ: <span class="mono">${fmt(state.ob.bidQ,2)}</span> • AskΣ: <span class="mono">${fmt(state.ob.askQ,2)}</span> • Skew: <b>${(state.ob.skew>0) ? 'Bids' : 'Asks'}</b>`;
-  } else {
-    $("obBlock").innerHTML = `Orderbook not available.`;
-  }
-}
-
-/* Evaluate plan */
-$("evalBtn").addEventListener("click", ()=>{
-  const st = window.__MILA_STATE;
-  if(!st){ alert("Fetch a coin first"); return; }
-  const form = {
-    entry: +$("entry").value, stop: +$("stop").value, tp1: +$("tp1").value, tp2: +$("tp2").value, tpF: +$("tpF").value,
-    balance:+$("balance").value, riskPct:+$("riskPct").value, side:$("side").value
-  };
-  if(!isFinite(form.entry) || !isFinite(form.stop)){ alert("Entry and Stop required"); return; }
-  const res = evaluatePlan(form, st);
-  let issuesHtml = res.issues.length? `<div class="text-sm text-[var(--danger)]">${res.issues.map(i=>`• ${i}`).join("<br>")}</div>` : `<div class="text-sm text-[var(--muted)]">No immediate structural issues.</div>`;
-  $("planOutput").innerHTML = `
-    <div>Risk $: <b class="mono">${fmt(res.sizing.riskAmt,2)}</b> • Qty: <b class="mono">${fmt(res.sizing.qty,6)}</b></div>
-    <div class="mt-2">R:R → TP1: <b>${fmt(res.rrs.r1,2)}</b> • TP2: <b>${fmt(res.rrs.r2,2)}</b> • Final: <b>${fmt(res.rrs.rF,2)}</b></div>
-    <div class="mt-3">${issuesHtml}</div>
-    <div class="mt-3 text-xs text-[var(--muted)]">Mila suggested risk: <b>${fmt(res.rec.suggestedRisk,2)}%</b> • Nearest psych: <b>${fmt(res.rec.nearestPsych)}</b></div>
-  `;
-  if(res.issues.length) $("planOutput").classList.add("flash"); else $("planOutput").classList.remove("flash");
 });
 
-/* Suggest Mila levels auto-fill */
+/* ----------------- Suggest & Evaluate handlers ----------------- */
 $("suggestBtn").addEventListener("click", ()=>{
-  const st = window.__MILA_STATE;
-  if(!st){ alert("Fetch a coin first"); return; }
-  const rec = milaRecommendations(st, $("side").value);
+  if(!lastState){ alert('Fetch a coin first'); return; }
+  const rec = milaRead(lastState, $("side").value || 'long');
   $("stop").value = fmt(rec.recommended.sSL,6);
   $("tp1").value = fmt(rec.recommended.sTP1,6);
   $("tp2").value = fmt(rec.recommended.sTP2,6);
   $("tpF").value = fmt(rec.recommended.sTPF,6);
-  msg("Mila suggested levels filled");
+  setStatus('suggested filled');
 });
 
-/* reset */
-$("resetBtn").addEventListener("click", ()=> location.reload());
-
-/* small UI glue: suggestions click wiring helper (we used inline JSON) */
-/* Not needed: selectCoin handled inline JSON string parse. */
-
-/* ===== PWA: inline manifest & service worker registration via blob ===== */
-(function registerPWA(){
-  // manifest blob
-  const manifest = {
-    name: "Mila Trade Assistant",
-    short_name: "MilaTA",
-    start_url: ".",
-    display: "standalone",
-    background_color: "#0b0f14",
-    theme_color: "#00ff95",
-    icons: [
-      { src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512'><rect width='100%' height='100%' fill='#071018'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' fill='#00ff95' font-family='Arial'>TS</text></svg>`), sizes:"512x512", type:"image/svg+xml"}
-    ]
+$("evalBtn").addEventListener("click", ()=>{
+  if(!lastState){ alert('Fetch a coin first'); return; }
+  const form = {
+    entry: +$("entry").value, stop:+$("stop").value, tp1:+$("tp1").value, tp2:+$("tp2").value, tpF:+$("tpF").value,
+    balance:+$("balance").value||0, riskPct:+$("riskPct").value||1, side:$("side").value||'long'
   };
-  const mm = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-  const mmUrl = URL.createObjectURL(mm);
-  const link = document.createElement('link'); link.rel='manifest'; link.href = mmUrl;
-  document.head.appendChild(link);
-
-  // service worker blob
-  const swCode = `
-    const CACHE = 'mila-cache-v1';
-    self.addEventListener('install', e => {
-      e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['/','/index.html'])));
-      self.skipWaiting();
-    });
-    self.addEventListener('activate', e => { self.clients.claim(); });
-    self.addEventListener('fetch', e => {
-      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
-    });
+  if(!isFinite(form.entry) || !isFinite(form.stop)){ alert('Entry & Stop required'); return; }
+  const res = evaluateUserPlan(form, lastState);
+  const sizing = res.sizing;
+  const rrs = res.rrs;
+  const issues = res.issues;
+  const out = `
+    <div>Risk $: <b class="mono">${fmt(sizing.riskAmt,2)}</b> • Qty: <b class="mono">${fmt(sizing.qty,6)}</b></div>
+    <div class="mt-2 small">R:R → TP1: <b>${fmt(rrs.r1,2)}</b> • TP2: <b>${fmt(rrs.r2,2)}</b> • Final: <b>${fmt(rrs.rF,2)}</b></div>
+    <div class="mt-2">${issues.length? `<div class="small text-[var(--danger)]">${issues.map(i=>`• ${i}`).join('<br>')}</div>` : '<div class="small text-[var(--muted)]">Plan is structurally aligned.</div>'}</div>
+    <div class="mt-2 small text-[var(--muted)]">Mila suggested risk: <b>${fmt(res.mila.suggestedRisk,2)}%</b></div>
   `;
-  const swBlob = new Blob([swCode], {type:'text/javascript'});
-  const swUrl = URL.createObjectURL(swBlob);
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register(swUrl).then(()=> console.log('SW registered inline')).catch(()=>{/*ignore*/});
-  }
+  $("planOutput").innerHTML = out;
+  if(issues.length) $("planOutput").classList.add('flash'); else $("planOutput").classList.remove('flash');
+});
+
+/* ----------------- Inline PWA manifest & SW (single-file friendly) ----------------- */
+(function registerPWA(){
+  try{
+    const manifest = {
+      name: "Mila Trade Assistant",
+      short_name: "MilaTA",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#061016",
+      theme_color: "#00ff95",
+      icons: [ { src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512'><rect width='100%' height='100%' rx='80' fill='#0b1820'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' fill='#00ff95' font-family='Inter'>M</text></svg>`), sizes:"512x512", type:"image/svg+xml" } ]
+    };
+    const mm = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+    const url = URL.createObjectURL(mm);
+    const link = document.createElement('link'); link.rel='manifest'; link.href = url; document.head.appendChild(link);
+
+    const swCode = `
+      const CACHE='mila-v1';
+      self.addEventListener('install', e=>{ e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['/','/index.html']))) ; self.skipWaiting(); });
+      self.addEventListener('activate', e=>self.clients.claim());
+      self.addEventListener('fetch', e=>{ e.respondWith(caches.match(e.request).then(r=> r|| fetch(e.request))); });
+    `;
+    const swBlob = new Blob([swCode], {type:'text/javascript'});
+    const swUrl = URL.createObjectURL(swBlob);
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register(swUrl).then(()=>console.log('SW registered')).catch(()=>{/*silent*/}); }
+  }catch(e){ console.warn('PWA inline failed', e); }
 })();
 
-/* Initial UI state */
-msg("ready");
+/* ================== END ================== */
 
-/* ===== End of file ===== */
+/* ----------------- Serverless proxy example (Netlify/Azure/Vercel) -----------------
+  Save this as a serverless function to hide the CMC key. Then replace client CMC calls to /api/cmc?symbol=...
+  Node (Netlify/Vercel) example (JavaScript):
+
+  // netlify/functions/cmc.js
+  const fetch = require('node-fetch');
+  exports.handler = async (event) => {
+    const { symbol } = event.queryStringParameters || {};
+    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${encodeURIComponent(symbol)}`;
+    const res = await fetch(url, { headers: { 'X-CMC_PRO_API_KEY': process.env.CMC_KEY } });
+    const json = await res.json();
+    return { statusCode: 200, body: JSON.stringify(json) };
+  };
+
+  Deploy to Netlify/Vercel and set environment variable CMC_KEY to your secret. Then in client code:
+    fetch('/.netlify/functions/cmc?symbol=DOLO') // instead of direct CMC call
+-------------------------------------------------------------------------- */
 
 </script>
 </body>
