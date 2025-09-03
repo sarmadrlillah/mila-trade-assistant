@@ -2,170 +2,434 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mila Trade Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mila Trade Assistant — Pro</title>
+  <!-- Tailwind for sleek UI -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js + Financial plugin for candles -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@3.3.0"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: #0f1116;
-      color: #eee;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
-    }
-    .card {
-      background: #1a1d24;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      padding: 2rem;
-      max-width: 500px;
-      width: 100%;
-      margin-bottom: 2rem;
-    }
-    h1 { color: #00d084; text-align: center; }
-    label { display: block; margin-top: 1rem; }
-    input, select {
-      width: 100%;
-      padding: 0.7rem;
-      border: none;
-      border-radius: 8px;
-      margin-top: 0.5rem;
-      background: #2a2f3a;
-      color: #fff;
-    }
-    button {
-      width: 100%;
-      margin-top: 1.5rem;
-      padding: 1rem;
-      border: none;
-      border-radius: 12px;
-      background: #00d084;
-      color: #000;
-      font-weight: bold;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    button:hover { background: #00b36b; }
-    .output {
-      margin-top: 2rem;
-      padding: 1rem;
-      background: #15181e;
-      border-radius: 12px;
-    }
-    .alert { color: #ff4d4d; font-weight: bold; }
+    :root{--bg:#0f1116;--card:#161a23;--muted:#9aa4b2;--accent:#00d084;--warn:#ff6b6b;--info:#7aa2f7}
+    body{background:var(--bg);color:#e7ecf3}
+    .glass{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));backdrop-filter:blur(8px)}
+    .shine{box-shadow:0 10px 40px rgba(0,0,0,.35)}
+    .pulse-warn{animation:pulse 1.2s infinite}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,107,107,.55)}70%{box-shadow:0 0 0 14px rgba(255,107,107,0)}100%{box-shadow:0 0 0 0 rgba(255,107,107,0)}}
+    .mono{font-feature-settings:"tnum" on, "lnum" on}
   </style>
 </head>
-<body>
-  <div class="card">
-    <h1>Mila Trade Assistant</h1>
-    <label for="symbol">Select Coin:</label>
-    <select id="symbol">
-      <option value="ICPUSDT">ICP</option>
-      <option value="BTCUSDT">BTC</option>
-      <option value="ETHUSDT">ETH</option>
-      <option value="SOLUSDT">SOL</option>
-      <option value="DOLOUSDT">DOLO</option>
-    </select>
+<body class="min-h-screen">
+  <header class="max-w-6xl mx-auto px-4 pt-6 pb-2">
+    <h1 class="text-3xl md:text-4xl font-semibold text-center">📊 Mila Trade Assistant <span class="text-[var(--accent)]">Pro</span></h1>
+    <p class="text-center text-sm text-[var(--muted)] mt-2">Markets don’t lie — they just hide the story. I decode it. 😏</p>
+  </header>
 
-    <label>Entry Price:</label>
-    <input type="number" id="entry" placeholder="e.g. 5.25" />
+  <main class="max-w-6xl mx-auto px-4 pb-16 grid md:grid-cols-3 gap-6">
+    <!-- Left: Inputs -->
+    <section class="md:col-span-1 glass shine rounded-2xl p-5">
+      <h2 class="text-lg font-semibold mb-3">1) Pick coin & timeframe</h2>
+      <label class="text-sm text-[var(--muted)]">Binance Symbol</label>
+      <input id="symbol" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39] mono" placeholder="ICPUSDT" value="ICPUSDT" />
 
-    <label>Stop Loss:</label>
-    <input type="number" id="sl" placeholder="e.g. 4.90" />
+      <label class="text-sm text-[var(--muted)] mt-4 block">Candle Timeframe</label>
+      <select id="tf" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39]">
+        <option value="15m">15m (intraday)</option>
+        <option value="1h" selected>1h</option>
+        <option value="4h">4h</option>
+        <option value="1d">1d</option>
+      </select>
 
-    <label>Take Profit (TP):</label>
-    <input type="number" id="tp" placeholder="e.g. 5.80" />
+      <button id="fetchBtn" class="w-full mt-4 py-3 rounded-xl bg-[var(--accent)] text-black font-semibold hover:opacity-90">Fetch & Analyze</button>
 
-    <label>Account Balance (USDT):</label>
-    <input type="number" id="balance" placeholder="e.g. 1000" />
+      <div class="mt-6 h-px bg-[#242b39]"></div>
 
-    <label>Risk % per Trade:</label>
-    <input type="number" id="risk" placeholder="e.g. 1" />
+      <h2 class="text-lg font-semibold mt-6">2) Your plan</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-[var(--muted)]">Entry</label>
+          <input id="entry" type="number" step="0.0001" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39] mono" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">Stop Loss</label>
+          <input id="sl" type="number" step="0.0001" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39] mono" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">TP1</label>
+          <input id="tp1" type="number" step="0.0001" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39] mono" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">TP2</label>
+          <input id="tp2" type="number" step="0.0001" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39] mono" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">Final TP</label>
+          <input id="tpF" type="number" step="0.0001" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39] mono" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">Account (USDT)</label>
+          <input id="balance" type="number" step="0.01" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39] mono" value="1000" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">Risk %</label>
+          <input id="riskPct" type="number" step="0.1" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39] mono" value="1" />
+        </div>
+        <div>
+          <label class="text-xs text-[var(--muted)]">Direction</label>
+          <select id="side" class="w-full mt-1 p-3 rounded-xl bg-[#1a1f2b] border border-[#242b39]">
+            <option value="long" selected>Long</option>
+            <option value="short">Short</option>
+          </select>
+        </div>
+      </div>
 
-    <button onclick="analyze()">Run Mila Analysis</button>
+      <button id="planBtn" class="w-full mt-4 py-3 rounded-xl bg-[var(--info)] text-black font-semibold hover:opacity-90">Check Plan vs Reality</button>
 
-    <div id="output" class="output"></div>
-  </div>
+      <p class="text-[10px] text-[var(--muted)] mt-3">CMC key lives in this page for your convenience. Anyone with the source can see it. Use a dedicated free key.</p>
+    </section>
+
+    <!-- Middle: Chart & levels -->
+    <section class="md:col-span-2 space-y-6">
+      <div class="glass shine rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold">Price Action</h3>
+          <div class="text-xs text-[var(--muted)]" id="priceMeta">—</div>
+        </div>
+        <canvas id="candleChart" height="240"></canvas>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="glass shine rounded-2xl p-4">
+          <h4 class="font-semibold">ADR & Psych</h4>
+          <div id="adrBlock" class="text-sm mt-2"></div>
+        </div>
+        <div class="glass shine rounded-2xl p-4">
+          <h4 class="font-semibold">EMA Gravity</h4>
+          <div id="emaBlock" class="text-sm mt-2"></div>
+        </div>
+        <div class="glass shine rounded-2xl p-4">
+          <h4 class="font-semibold">Orderbook Skew</h4>
+          <div id="obBlock" class="text-sm mt-2"></div>
+        </div>
+      </div>
+
+      <div class="glass shine rounded-2xl p-4">
+        <h4 class="font-semibold">Mila’s Verdict</h4>
+        <div id="verdict" class="text-sm mt-2"></div>
+      </div>
+
+      <div class="glass shine rounded-2xl p-4">
+        <h4 class="font-semibold">Plan vs Reality</h4>
+        <div id="pvr" class="text-sm mt-2"></div>
+      </div>
+    </section>
+  </main>
 
   <script>
-    const CMC_KEY = "7c349fb2-99f1-4e60-8a50-0b0323354923";
+    // ===== Keys & endpoints =====
+    const CMC_KEY = "7c349fb2-99f1-4e60-8a50-0b0323354923"; // visible on client by design
+    const BINANCE = "https://api.binance.com";
 
-    async function fetchPrice(symbol) {
-      try {
-        // Binance first
-        let res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-        if (res.ok) {
-          let data = await res.json();
-          return parseFloat(data.price);
-        }
-        throw new Error("Binance failed");
-      } catch (e1) {
-        try {
-          // CoinGecko fallback
-          let map = { ICPUSDT:"internet-computer", BTCUSDT:"bitcoin", ETHUSDT:"ethereum", SOLUSDT:"solana" };
-          let id = map[symbol] || "bitcoin";
-          let res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
-          let data = await res.json();
-          return data[id].usd;
-        } catch (e2) {
-          // CMC fallback
-          let map2 = { ICPUSDT:"8916", BTCUSDT:"1", ETHUSDT:"1027", SOLUSDT:"5426" };
-          let id = map2[symbol] || "1";
-          let res = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=${id}`, {
-            headers: { "X-CMC_PRO_API_KEY": CMC_KEY }
-          });
-          let json = await res.json();
-          return json.data[id].quote.USD.price;
-        }
+    // ===== Helpers =====
+    const fmt = (n, d=4) => (isFinite(n)? Number(n).toFixed(d): "—");
+    const ema = (arr, p) => {
+      const k = 2/(p+1); let ema=[]; let prev=arr[0];
+      for (let i=0;i<arr.length;i++){ const val=arr[i]; prev = i===0? val : (val - prev)*k + prev; ema.push(prev);} return ema;
+    }
+    const trueRange = (kl) => { // [open,high,low,close]
+      const tr=[kl[0][1]-kl[0][2]]; for (let i=1;i<kl.length;i++){const h=kl[i][1], l=kl[i][2], pc=kl[i-1][3]; tr.push(Math.max(h-pc, pc-l, h-l));} return tr.map(Math.abs);
+    }
+    const sum = a=>a.reduce((x,y)=>x+y,0);
+
+    // ===== State =====
+    let lastFetched = { symbol:"ICPUSDT", tf:"1h", price:0, adr:0, adrHi:0, adrLo:0, psych:[], emas:{}, candles:[], vectors:[] };
+    let chart;
+
+    // ===== Fetch Klines (Binance) =====
+    async function getKlines(symbol, interval, limit=500){
+      const url = `${BINANCE}/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
+      const r = await fetch(url); if(!r.ok) throw new Error("Binance klines failed");
+      const raw = await r.json();
+      // map to {t:o,h,l,c,v}
+      return raw.map(d=>({
+        t:+d[0], o:+d[1], h:+d[2], l:+d[3], c:+d[4], v:+d[5]
+      }));
+    }
+
+    async function getDailyForADR(symbol){
+      const d = await getKlines(symbol, "1d", 14);
+      const ranges = d.map(k=>k.h-k.l);
+      const adr = sum(ranges)/ranges.length;
+      const lastClose = d[d.length-1].c;
+      return { adr, lastClose };
+    }
+
+    async function getOrderbook(symbol){
+      const r = await fetch(`${BINANCE}/api/v3/depth?symbol=${symbol}&limit=50`);
+      if(!r.ok) throw new Error("OB fail");
+      const j = await r.json();
+      const bids = j.bids.map(([p,q])=>({p:+p,q:+q}));
+      const asks = j.asks.map(([p,q])=>({p:+p,q:+q}));
+      const bidQ = sum(bids.map(b=>b.q));
+      const askQ = sum(asks.map(a=>a.q));
+      const skew = (bidQ-askQ)/(bidQ+askQ);
+      return { bids, asks, skew };
+    }
+
+    async function getPriceFallback(symbol){
+      // CoinGecko quick map for common IDs; otherwise try CMC symbol
+      const map = { BTCUSDT:"bitcoin", ETHUSDT:"ethereum", SOLUSDT:"solana", ICPUSDT:"internet-computer" };
+      try{
+        const id = map[symbol] || "bitcoin";
+        const cg = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
+        const j = await cg.json();
+        if(j[id]) return j[id].usd;
+      }catch(e){/* ignore */}
+      try{
+        const cmc = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol.replace("USDT","")}`, { headers:{"X-CMC_PRO_API_KEY":CMC_KEY}});
+        const jj = await cmc.json();
+        const sym = symbol.replace("USDT","");
+        if(jj.data && jj.data[sym]) return jj.data[sym].quote.USD.price;
+      }catch(e){/* ignore */}
+      return NaN;
+    }
+
+    function computePsychLevels(price){
+      // Major: 0.00; Mid: .25/.50/.75 around price
+      const step = Math.pow(10, Math.floor(Math.log10(price))-1); // rough normalization
+      const majors = []; const mids = [];
+      const base = Math.round(price/step)*step;
+      for(let i=-3;i<=3;i++){
+        const m = base + i*step; majors.push(m);
+        mids.push(m+step*0.25, m+step*0.5, m+step*0.75);
       }
+      return { majors, mids };
     }
 
-    async function analyze() {
-      let symbol = document.getElementById("symbol").value;
-      let entry = parseFloat(document.getElementById("entry").value);
-      let sl = parseFloat(document.getElementById("sl").value);
-      let tp = parseFloat(document.getElementById("tp").value);
-      let balance = parseFloat(document.getElementById("balance").value);
-      let riskPct = parseFloat(document.getElementById("risk").value);
-
-      let output = document.getElementById("output");
-      output.innerHTML = "Loading...";
-
-      let price = await fetchPrice(symbol);
-
-      // Risk sizing
-      let riskAmount = balance * (riskPct/100);
-      let stopDistance = Math.abs(entry - sl);
-      let posSize = stopDistance > 0 ? riskAmount / stopDistance : 0;
-
-      // Mila logic: sanity zones
-      let adr = price * 0.05; // fake ADR = 5% daily range
-      let psych = Math.round(price);
-      let saneSL = price - adr;
-      let saneTP1 = price + adr*0.5;
-      let saneTP2 = price + adr;
-
-      let warn = "";
-      if (sl < saneSL) warn += "⚠️ SL is tighter than sane zone.<br>";
-      if (tp < saneTP1) warn += "⚠️ TP is modest vs Mila zone.<br>";
-
-      output.innerHTML = `
-        <h3>Live Price: ${price.toFixed(3)} USDT</h3>
-        <p>Position Size: <b>${posSize.toFixed(2)}</b> tokens</p>
-        <p>Risk Amount: <b>${riskAmount.toFixed(2)} USDT</b></p>
-        <hr>
-        <p><b>Sane Zones</b><br>
-        Psych Level: ~${psych}<br>
-        Suggested SL: ${saneSL.toFixed(3)}<br>
-        Suggested TP1: ${saneTP1.toFixed(3)}<br>
-        Suggested TP2: ${saneTP2.toFixed(3)}</p>
-        <hr>
-        ${warn ? `<div class='alert'>${warn}</div>` : "✅ Your plan fits Mila’s sanity zones."}
-      `;
+    function findVectors(candles){
+      // Vector candle proxy: body >= 60% of range AND volume spike vs 20-sma vol
+      const vols = candles.map(c=>c.v);
+      const volSMA20 = vols.map((_,i)=> i<19? NaN : sum(vols.slice(i-19,i+1))/20);
+      const res=[];
+      for(let i=0;i<candles.length;i++){
+        const c=candles[i]; const range=c.h-c.l; const body=Math.abs(c.c-c.o);
+        const bodyPct = range? body/range:0;
+        const spike = volSMA20[i]? c.v>1.6*volSMA20[i] : false;
+        if(bodyPct>=0.6 && spike){ res.push({i, dir: (c.c>c.o?"green":"red"), hi:c.h, lo:c.l, t:c.t}); }
+      }
+      return res.slice(-12); // last 12 vectors
     }
+
+    function makeVerdict(side, entry, sl, tps, state){
+      const p = state.price, adrLo=state.adrLo, adrHi=state.adrHi; const e50 = state.emas.e50.at(-1), e200=state.emas.e200.at(-1);
+      const near = (x,y,th)=> Math.abs(x-y)<=th;
+      const psychAll = [...state.psych.majors, ...state.psych.mids];
+      const nearPsych = psychAll.find(level=>near(entry, level, state.adr*0.1));
+
+      const notes=[];
+      // ADR position
+      if(entry>adrHi){ notes.push("Entry above ADR high — trap risk: MM closing longs (green vectors get answered).");} 
+      else if(entry<adrLo){ notes.push("Entry below ADR low — spring/absorption zone: watch for red vectors to get recovered.");}
+      else { notes.push("Entry inside ADR — neutrality, let EMA gravity decide."); }
+
+      // EMA gravity & memory
+      if(p>e50 && e50>e200) notes.push("Bullish alignment (price > 50 > 200). Dips to 50 EMA are entries; 200 is memory.");
+      if(p<e50 && e50<e200) notes.push("Bearish alignment (price < 50 < 200). Rallies to 50 EMA are sells; 200 caps.");
+      if(near(entry, e50, state.adr*0.15)) notes.push("Entry near 50 EMA — gravity zone; expect mean reversion reaction.");
+      if(near(entry, e200, state.adr*0.15)) notes.push("Entry near 200 EMA — memory test: expect decision candle.");
+
+      // Psych
+      if(nearPsych) notes.push(`Entry near psych level ${fmt(nearPsych,4)} — liquidity magnet / fakeout risk.`);
+
+      // Vector context last 4
+      const lastVec = state.vectors.slice(-4);
+      const greens = lastVec.filter(v=>v.dir==='green').length;
+      const reds = lastVec.filter(v=>v.dir==='red').length;
+      if(greens>reds) notes.push("Recent green vector dominance — MMs likely closing longs into highs; mind reversals.");
+      if(reds>greens) notes.push("Recent red vector dominance — MMs likely closing shorts into lows; mind reversals.");
+
+      // Position quality (simple score)
+      let score = 0;
+      if(side==='long'){
+        if(entry<=p && entry>=adrLo) score+=1; if(entry<e50) score+=1; if(reds>=2) score+=1;
+      } else {
+        if(entry>=p && entry<=adrHi) score+=1; if(entry>e50) score+=1; if(greens>=2) score+=1;
+      }
+      // Risk suggestion from vol
+      const volRatio = state.adr/state.price; // daily percentage range
+      let suggestedRisk = 1.0; // baseline 1%
+      if(volRatio>0.06) suggestedRisk = 0.5; else if(volRatio<0.03) suggestedRisk = 1.5;
+
+      // Suggested SL/TP from context
+      let sSL, sTP1, sTP2, sTPF;
+      if(side==='long'){
+        sSL = Math.min(entry - state.adr*0.4, state.adrLo*0.995);
+        sTP1 = entry + state.adr*0.5;
+        sTP2 = Math.min(entry + state.adr*0.9, state.adrHi*0.998);
+        sTPF = Math.min(entry + state.adr*1.3, state.adrHi*1.02);
+      } else {
+        sSL = Math.max(entry + state.adr*0.4, state.adrHi*1.005);
+        sTP1 = entry - state.adr*0.5;
+        sTP2 = Math.max(entry - state.adr*0.9, state.adrLo*1.002);
+        sTPF = Math.max(entry - state.adr*1.3, state.adrLo*0.98);
+      }
+
+      return { notes, score, suggestedRisk, sugg:{ sSL, sTP1, sTP2, sTPF } };
+    }
+
+    function planVsReality(side, entry, sl, tps, state, verdict){
+      const rows=[];
+      const push=(label,user,sugg)=>{
+        const diff = isFinite(user) && isFinite(sugg)? (user-sugg): NaN;
+        const warn = isFinite(diff) && Math.abs(diff)>(state.adr*0.35) ? "⚠️" : "";
+        rows.push(`<tr><td class='py-1 pr-2 text-[var(--muted)]'>${label}</td><td class='py-1 mono'>${fmt(user)}</td><td class='py-1 mono'>${fmt(sugg)}</td><td class='py-1'>${warn}</td></tr>`);
+      }
+      push("Stop Loss", sl, verdict.sugg.sSL);
+      push("TP1", tps[0], verdict.sugg.sTP1);
+      push("TP2", tps[1], verdict.sugg.sTP2);
+      push("Final TP", tps[2], verdict.sugg.sTPF);
+      return `<table class='w-full text-sm'>${rows.join('')}</table>`;
+    }
+
+    function sizePosition(balance, riskPct, entry, sl){
+      const riskAmt = balance*(riskPct/100);
+      const stopDist = Math.abs(entry-sl);
+      const qty = stopDist>0? riskAmt/stopDist : 0;
+      const rr1 = Math.abs((entry - (entry + Math.sign((entry<sl)?1:-1))) / (entry - sl)); // placeholder
+      return { riskAmt, qty };
+    }
+
+    function updateBlocks(state, ob){
+      // ADR/Psych
+      const adrEl = document.getElementById('adrBlock');
+      const psychMaj = state.psych.majors.map(p=>fmt(p)).join(' · ');
+      const psychMid = state.psych.mids.map(p=>fmt(p)).join(' · ');
+      adrEl.innerHTML = `
+        <div>ADR: <span class='mono'>${fmt(state.adr)}</span> | Last Close: <span class='mono'>${fmt(state.price)}</span></div>
+        <div class='mt-1'>ADR Low → <span class='mono'>${fmt(state.adrLo)}</span></div>
+        <div>ADR High → <span class='mono'>${fmt(state.adrHi)}</span></div>
+        <div class='mt-2 text-[var(--muted)]'>Psych (majors): ${psychMaj}</div>
+        <div class='text-[var(--muted)]'>Psych (mids): ${psychMid}</div>`;
+
+      // EMA
+      const e = state.emas;
+      document.getElementById('emaBlock').innerHTML = `
+        <div>EMA5: <span class='mono'>${fmt(e.e5.at(-1))}</span></div>
+        <div>EMA13: <span class='mono'>${fmt(e.e13.at(-1))}</span></div>
+        <div>EMA50 (gravity): <span class='mono'>${fmt(e.e50.at(-1))}</span></div>
+        <div>EMA200: <span class='mono'>${fmt(e.e200.at(-1))}</span></div>
+        <div class='mt-1 text-[var(--muted)]'>800 as memory (computed on 1h+): ${e.e800? fmt(e.e800.at(-1)): '—'}</div>`;
+
+      // Orderbook
+      const skewPct = ob? (ob.skew*100).toFixed(1): '—';
+      document.getElementById('obBlock').innerHTML = ob? `
+        <div>Bid Σ: <span class='mono'>${fmt(sum(ob.bids.map(b=>b.q)),2)}</span></div>
+        <div>Ask Σ: <span class='mono'>${fmt(sum(ob.asks.map(a=>a.q)),2)}</span></div>
+        <div>Skew: <span class='mono ${ob.skew>0? 'text-green-400':'text-red-400'}'>${skewPct}%</span> (${ob.skew>0? 'bids' : 'asks'} dominant)</div>` : '—';
+    }
+
+    function drawChart(state){
+      const ctx = document.getElementById('candleChart').getContext('2d');
+      const data = state.candles.map(k=>({x:k.t, o:k.o, h:k.h, l:k.l, c:k.c}));
+      const ema50 = state.emas.e50.map((v,i)=>({x: state.candles[i].t, y:v}));
+      const ema200 = state.emas.e200.map((v,i)=>({x: state.candles[i].t, y:v}));
+
+      if(chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'candlestick',
+        data: {
+          datasets: [
+            { label:'Price', data, borderColor:'#9aa4b2' },
+            { label:'EMA50', type:'line', data: ema50, borderColor:'#00d084', borderWidth:1.5, pointRadius:0 },
+            { label:'EMA200', type:'line', data: ema200, borderColor:'#7aa2f7', borderWidth:1.2, pointRadius:0 }
+          ]
+        },
+        options: {
+          parsing:false, responsive:true, maintainAspectRatio:false,
+          scales:{ x:{ ticks:{ color:'#9aa4b2'} }, y:{ ticks:{ color:'#9aa4b2'} } },
+          plugins:{ legend:{ labels:{ color:'#e7ecf3' } } }
+        }
+      });
+    }
+
+    // ===== Main fetch & analyze =====
+    document.getElementById('fetchBtn').addEventListener('click', async()=>{
+      const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+      const tfSel = document.getElementById('tf').value;
+      const tf = tfSel;
+      try{
+        // 1) price + ADR
+        const { adr, lastClose } = await getDailyForADR(symbol);
+        // 2) intraday candles
+        const candles = await getKlines(symbol, tf, 400);
+        const price = candles.at(-1).c;
+        // 3) EMAs
+        const closes = candles.map(k=>k.c);
+        const e5 = ema(closes,5), e13=ema(closes,13), e50=ema(closes,50), e200=ema(closes,200);
+        const e800 = closes.length>=800? ema(closes,800) : null;
+        // 4) Psych levels
+        const psych = computePsychLevels(price);
+        // 5) Vector candles
+        const vectors = findVectors(candles);
+        // 6) Orderbook
+        let ob=null; try{ ob = await getOrderbook(symbol);}catch(e){/* ignore */}
+
+        lastFetched = { symbol, tf, price, adr, adrHi:lastClose+adr, adrLo:lastClose-adr, psych, emas:{e5,e13,e50,e200,e800}, candles, vectors };
+        document.getElementById('priceMeta').textContent = `${symbol} • ${tf} • Px ${fmt(price)} • ADR ${fmt(adr)}`;
+        updateBlocks(lastFetched, ob);
+        drawChart(lastFetched);
+
+        // Quick verdict preview
+        const v = makeVerdict('long', price, price-adr*0.4, [price+adr*0.5, price+adr*0.9, price+adr*1.3], lastFetched);
+        document.getElementById('verdict').innerHTML = `
+          <div class='text-[var(--muted)] mb-2'>Auto context (neutral)</div>
+          <ul class='list-disc pl-5'>${v.notes.map(n=>`<li>${n}</li>`).join('')}</ul>
+          <div class='mt-2'>Suggested risk: <b>${fmt(v.suggestedRisk,1)}%</b></div>`;
+      }catch(e){
+        alert('Fetch failed. Binance symbol correct?');
+        console.error(e);
+      }
+    });
+
+    document.getElementById('planBtn').addEventListener('click', ()=>{
+      const entry = parseFloat(document.getElementById('entry').value);
+      const sl = parseFloat(document.getElementById('sl').value);
+      const tp1 = parseFloat(document.getElementById('tp1').value);
+      const tp2 = parseFloat(document.getElementById('tp2').value);
+      const tpF = parseFloat(document.getElementById('tpF').value);
+      const balance = parseFloat(document.getElementById('balance').value||0);
+      let riskPct = parseFloat(document.getElementById('riskPct').value||1);
+      const side = document.getElementById('side').value;
+
+      if(!isFinite(entry) || !isFinite(sl)) { alert('Entry & SL required'); return; }
+
+      const v = makeVerdict(side, entry, sl, [tp1,tp2,tpF], lastFetched);
+      if(!riskPct) riskPct = v.suggestedRisk;
+      const sizing = sizePosition(balance, riskPct, entry, sl);
+
+      const rows = [];
+      const rr = (tp)=> side==='long'? (tp-entry)/(entry-sl) : (entry-tp)/(sl-entry);
+      if(isFinite(tp1)) rows.push(`<li>TP1 RR: <b>${fmt(rr(tp1),2)}</b></li>`);
+      if(isFinite(tp2)) rows.push(`<li>TP2 RR: <b>${fmt(rr(tp2),2)}</b></li>`);
+      if(isFinite(tpF)) rows.push(`<li>Final RR: <b>${fmt(rr(tpF),2)}</b></li>`);
+
+      document.getElementById('verdict').innerHTML = `
+        <div class='${(side==='long' && entry>lastFetched.adrHi) || (side==='short' && entry<lastFetched.adrLo) ? 'pulse-warn' : ''}'>
+          <div class='mb-2'><b>${side.toUpperCase()}</b> plan at <span class='mono'>${fmt(entry)}</span></div>
+          <ul class='list-disc pl-5 mb-2'>${v.notes.map(n=>`<li>${n}</li>`).join('')}</ul>
+          <div>Suggested risk (vol-aware): <b>${fmt(v.suggestedRisk,1)}%</b></div>
+          <div class='mt-2'>Mila Suggested Levels → SL <span class='mono'>${fmt(v.sugg.sSL)}</span>, TP1 <span class='mono'>${fmt(v.sugg.sTP1)}</span>, TP2 <span class='mono'>${fmt(v.sugg.sTP2)}</span>, Final <span class='mono'>${fmt(v.sugg.sTPF)}</span></div>
+        </div>`;
+
+      document.getElementById('pvr').innerHTML = `
+        <div class='mb-2'>Sizing → Risk $: <b class='mono'>${fmt(sizing.riskAmt,2)}</b> • Qty: <b class='mono'>${fmt(sizing.qty,4)}</b></div>
+        ${planVsReality(side, entry, sl, [tp1,tp2,tpF], lastFetched, v)}
+        <ul class='mt-2 text-sm'>${rows.join('')}</ul>
+        <div class='mt-3 text-xs text-[var(--muted)]'>Pay yourself on strength. Manage drawdown. Trust structure, not feelings. — Mila</div>`;
+    });
+
+    // Auto-run once on load
+    window.addEventListener('load', ()=> document.getElementById('fetchBtn').click());
   </script>
 </body>
 </html>
