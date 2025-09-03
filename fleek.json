@@ -1,0 +1,9 @@
+{
+  "build": {
+    "baseDir": "/",
+    "publicDir": "/",
+    "command": ""
+  },
+  "redirects": [],
+  "headers": []
+}

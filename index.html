@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mila Trade Assistant</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #0f1116;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    .card {
+      background: #1a1d24;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+    h1 { color: #00d084; text-align: center; }
+    label { display: block; margin-top: 1rem; }
+    input, select {
+      width: 100%;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+      background: #2a2f3a;
+      color: #fff;
+    }
+    button {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border: none;
+      border-radius: 12px;
+      background: #00d084;
+      color: #000;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    button:hover { background: #00b36b; }
+    .output {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #15181e;
+      border-radius: 12px;
+    }
+    .alert { color: #ff4d4d; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Mila Trade Assistant</h1>
+    <label for="symbol">Select Coin:</label>
+    <select id="symbol">
+      <option value="ICPUSDT">ICP</option>
+      <option value="BTCUSDT">BTC</option>
+      <option value="ETHUSDT">ETH</option>
+      <option value="SOLUSDT">SOL</option>
+      <option value="DOLOUSDT">DOLO</option>
+    </select>
+
+    <label>Entry Price:</label>
+    <input type="number" id="entry" placeholder="e.g. 5.25" />
+
+    <label>Stop Loss:</label>
+    <input type="number" id="sl" placeholder="e.g. 4.90" />
+
+    <label>Take Profit (TP):</label>
+    <input type="number" id="tp" placeholder="e.g. 5.80" />
+
+    <label>Account Balance (USDT):</label>
+    <input type="number" id="balance" placeholder="e.g. 1000" />
+
+    <label>Risk % per Trade:</label>
+    <input type="number" id="risk" placeholder="e.g. 1" />
+
+    <button onclick="analyze()">Run Mila Analysis</button>
+
+    <div id="output" class="output"></div>
+  </div>
+
+  <script>
+    const CMC_KEY = "7c349fb2-99f1-4e60-8a50-0b0323354923";
+
+    async function fetchPrice(symbol) {
+      try {
+        // Binance first
+        let res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+        if (res.ok) {
+          let data = await res.json();
+          return parseFloat(data.price);
+        }
+        throw new Error("Binance failed");
+      } catch (e1) {
+        try {
+          // CoinGecko fallback
+          let map = { ICPUSDT:"internet-computer", BTCUSDT:"bitcoin", ETHUSDT:"ethereum", SOLUSDT:"solana" };
+          let id = map[symbol] || "bitcoin";
+          let res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`);
+          let data = await res.json();
+          return data[id].usd;
+        } catch (e2) {
+          // CMC fallback
+          let map2 = { ICPUSDT:"8916", BTCUSDT:"1", ETHUSDT:"1027", SOLUSDT:"5426" };
+          let id = map2[symbol] || "1";
+          let res = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?id=${id}`, {
+            headers: { "X-CMC_PRO_API_KEY": CMC_KEY }
+          });
+          let json = await res.json();
+          return json.data[id].quote.USD.price;
+        }
+      }
+    }
+
+    async function analyze() {
+      let symbol = document.getElementById("symbol").value;
+      let entry = parseFloat(document.getElementById("entry").value);
+      let sl = parseFloat(document.getElementById("sl").value);
+      let tp = parseFloat(document.getElementById("tp").value);
+      let balance = parseFloat(document.getElementById("balance").value);
+      let riskPct = parseFloat(document.getElementById("risk").value);
+
+      let output = document.getElementById("output");
+      output.innerHTML = "Loading...";
+
+      let price = await fetchPrice(symbol);
+
+      // Risk sizing
+      let riskAmount = balance * (riskPct/100);
+      let stopDistance = Math.abs(entry - sl);
+      let posSize = stopDistance > 0 ? riskAmount / stopDistance : 0;
+
+      // Mila logic: sanity zones
+      let adr = price * 0.05; // fake ADR = 5% daily range
+      let psych = Math.round(price);
+      let saneSL = price - adr;
+      let saneTP1 = price + adr*0.5;
+      let saneTP2 = price + adr;
+
+      let warn = "";
+      if (sl < saneSL) warn += "⚠️ SL is tighter than sane zone.<br>";
+      if (tp < saneTP1) warn += "⚠️ TP is modest vs Mila zone.<br>";
+
+      output.innerHTML = `
+        <h3>Live Price: ${price.toFixed(3)} USDT</h3>
+        <p>Position Size: <b>${posSize.toFixed(2)}</b> tokens</p>
+        <p>Risk Amount: <b>${riskAmount.toFixed(2)} USDT</b></p>
+        <hr>
+        <p><b>Sane Zones</b><br>
+        Psych Level: ~${psych}<br>
+        Suggested SL: ${saneSL.toFixed(3)}<br>
+        Suggested TP1: ${saneTP1.toFixed(3)}<br>
+        Suggested TP2: ${saneTP2.toFixed(3)}</p>
+        <hr>
+        ${warn ? `<div class='alert'>${warn}</div>` : "✅ Your plan fits Mila’s sanity zones."}
+      `;
+    }
+  </script>
+</body>
+</html>
